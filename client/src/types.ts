@@ -25,7 +25,8 @@ export interface Room {
   showOutline: boolean;
 }
 
-export type TableShape = "round" | "rect" | "banquet";
+/** "u" is the Π-shaped table: a head bar with two arms. */
+export type TableShape = "round" | "rect" | "banquet" | "u";
 
 export interface Table {
   id: ID;
@@ -37,8 +38,10 @@ export interface Table {
   width: number; // diameter for round
   height: number;
   seatCount: number;
-  /** Banquet tables only: seats on one long side or on both. */
+  /** Banquet: seats on one long side or both. Π-shaped: seats outside only, or outside and inside. */
   sides?: 1 | 2;
+  /** Π-shaped tables only: depth of the head bar and the arms. */
+  barWidth?: number;
 }
 
 export interface SeatRef {

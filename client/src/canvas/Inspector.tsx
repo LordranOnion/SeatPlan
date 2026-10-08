@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ui } from "../app/uiStore";
-import { MAX_SEATS } from "../lib/geometry";
+import { MAX_SEATS, TABLE_DEFAULTS, barWidthOf } from "../lib/geometry";
 import { seatKey, tableStats, unassignGuest } from "../lib/seating";
 import {
   deleteFixture,
@@ -105,24 +105,31 @@ function TableInspector({ table, editable }: { table: Table; editable: boolean }
             disabled={!editable}
             onChange={(e) => {
               const shape = e.target.value as TableShape;
-              update(shape === "round" ? { shape, height: table.width } : { shape });
+              if (shape === "round") update({ shape, height: table.width });
+              else if (shape === "u" && table.shape !== "u") {
+                // A Π needs room for its arms: start from the default size unless the table is already larger.
+                const d = TABLE_DEFAULTS.u;
+                update({ shape, width: Math.max(table.width, d.width), height: Math.max(table.height, d.height) });
+              } else update({ shape });
             }}
           >
             <option value="round">{t("shapes.round")}</option>
             <option value="rect">{t("shapes.rect")}</option>
             <option value="banquet">{t("shapes.banquet")}</option>
+            <option value="u">{t("shapes.u")}</option>
           </select>
         </label>
-        {table.shape === "banquet" && (
+        {(table.shape === "banquet" || table.shape === "u") && (
           <label className="field">
             <span>{t("inspector.sides")}</span>
             <select
               value={table.sides ?? 2}
               disabled={!editable}
+              data-testid="table-sides"
               onChange={(e) => update({ sides: Number(e.target.value) === 1 ? 1 : 2 })}
             >
-              <option value={2}>{t("inspector.bothSides")}</option>
-              <option value={1}>{t("inspector.oneSide")}</option>
+              <option value={2}>{table.shape === "u" ? t("inspector.outsideAndInside") : t("inspector.bothSides")}</option>
+              <option value={1}>{table.shape === "u" ? t("inspector.outsideOnly") : t("inspector.oneSide")}</option>
             </select>
           </label>
         )}
@@ -159,12 +166,23 @@ function TableInspector({ table, editable }: { table: Table; editable: boolean }
         />
         {table.shape !== "round" && (
           <NumberField
-            label={t("inspector.depth")}
+            label={table.shape === "u" ? t("inspector.armLength") : t("inspector.depth")}
             value={table.height}
             min={30}
             max={2000}
             disabled={!editable}
             onCommit={(height) => update({ height })}
+          />
+        )}
+        {table.shape === "u" && (
+          <NumberField
+            label={t("inspector.barWidth")}
+            value={barWidthOf(table)}
+            min={20}
+            max={400}
+            disabled={!editable}
+            testId="bar-width"
+            onCommit={(barWidth) => update({ barWidth })}
           />
         )}
         <NumberField

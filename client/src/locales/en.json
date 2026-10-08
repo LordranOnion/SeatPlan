@@ -17,7 +17,8 @@
   "shapes": {
     "round": "Round",
     "rect": "Rectangular",
-    "banquet": "Long / banquet"
+    "banquet": "Long / banquet",
+    "u": "Π-shaped"
   },
   "fixtures": {
     "danceFloor": "Dance floor",
@@ -68,7 +69,11 @@
     "rotation": "Rotation °",
     "stats": "{{seated}} of {{total}} seats taken, {{free}} free",
     "ages": "Adults {{adults}} · Children {{children}}",
-    "emptySeat": "empty"
+    "emptySeat": "empty",
+    "outsideOnly": "Outside only",
+    "outsideAndInside": "Outside and inside",
+    "armLength": "Depth (arms)",
+    "barWidth": "Table depth"
   },
   "sidebar": {
     "title": "Guest list",

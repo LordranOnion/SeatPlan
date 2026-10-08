@@ -1,8 +1,8 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { memo, useMemo } from "react";
-import { Circle, Group, Rect, Text } from "react-konva";
-import { SEAT_RADIUS, rotate, seatPositions } from "../lib/geometry";
+import { Circle, Group, Line, Rect, Text } from "react-konva";
+import { SEAT_RADIUS, barWidthOf, rotate, seatPositions, uOutline } from "../lib/geometry";
 import type { Group as GuestGroup, Guest, Table } from "../types";
 import { COLORS, initials, radialLabel } from "./style";
 
@@ -49,7 +49,20 @@ function TableNodeImpl(props: Props) {
 
   const stroke = props.dropTable ? COLORS.drop : selected ? COLORS.selected : (props.remoteColor ?? COLORS.tableStroke);
   const strokeWidth = selected || props.dropTable || props.remoteColor ? 3 : 1.5;
-  const labelWidth = Math.max(60, Math.min(table.width, bodyHeight * 2) - 8);
+  const isU = table.shape === "u";
+  const barWidth = isU ? barWidthOf(table) : 0;
+  const labelWidth = isU ? Math.max(60, table.width - 16) : Math.max(60, Math.min(table.width, bodyHeight * 2) - 8);
+  // On a Π-shaped table the label sits on the head bar; elsewhere in the middle.
+  const labelY = isU ? -table.height / 2 + barWidth / 2 : 0;
+  const bodyStyle = {
+    fill: COLORS.tableFill,
+    stroke,
+    strokeWidth,
+    shadowColor: "black",
+    shadowOpacity: 0.08,
+    shadowBlur: 6,
+    shadowOffsetY: 2,
+  };
 
   return (
     <Group
@@ -84,6 +97,14 @@ function TableNodeImpl(props: Props) {
           shadowBlur={6}
           shadowOffsetY={2}
         />
+      ) : isU ? (
+        <Line
+          ref={(n) => props.registerBody(table.id, n)}
+          points={uOutline(table.width, table.height, barWidth)}
+          closed
+          lineJoin="round"
+          {...bodyStyle}
+        />
       ) : (
         <Rect
           ref={(n) => props.registerBody(table.id, n)}
@@ -103,6 +124,7 @@ function TableNodeImpl(props: Props) {
       )}
       <Text
         text={`${table.label}\n${props.stats.seated}/${table.seatCount}`}
+        y={labelY}
         width={labelWidth}
         height={40}
         offsetX={labelWidth / 2}

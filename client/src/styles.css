@@ -680,8 +680,13 @@ input[type="color"] {
 
 .field-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: flex-end;
+}
+
+.field-row > .field {
+  min-width: 76px;
 }
 
 .stepper {

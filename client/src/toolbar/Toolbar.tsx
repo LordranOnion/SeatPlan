@@ -56,6 +56,9 @@ export function Toolbar({ editable }: { editable: boolean }) {
             <button role="menuitem" onClick={() => newTable("banquet")} data-testid="add-banquet">
               ▬ {t("shapes.banquet")}
             </button>
+            <button role="menuitem" onClick={() => newTable("u")} data-testid="add-u">
+              Π {t("shapes.u")}
+            </button>
           </Menu>
           <Menu label={t("toolbar.addObject")} testId="add-object">
             {FIXTURES.map((f) => (

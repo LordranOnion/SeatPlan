@@ -16,13 +16,23 @@ export interface SeatPos {
   ny: number;
 }
 
-type SeatLayoutInput = Pick<Table, "shape" | "width" | "height" | "seatCount" | "sides">;
+type SeatLayoutInput = Pick<Table, "shape" | "width" | "height" | "seatCount" | "sides" | "barWidth">;
 
 export const TABLE_DEFAULTS: Record<TableShape, { width: number; height: number; seatCount: number }> = {
   round: { width: 120, height: 120, seatCount: 8 },
   rect: { width: 180, height: 90, seatCount: 8 },
   banquet: { width: 300, height: 70, seatCount: 12 },
+  u: { width: 420, height: 320, seatCount: 24 },
 };
+
+/** Default depth of the three bars of a Π-shaped table. */
+export const DEFAULT_BAR_WIDTH = 70;
+
+/** Depth of the bars of a Π-shaped table, kept small enough to leave a gap between the arms. */
+export function barWidthOf(table: Pick<Table, "width" | "height" | "barWidth">): number {
+  const d = table.barWidth ?? DEFAULT_BAR_WIDTH;
+  return Math.max(20, Math.min(d, table.width / 2 - 10, table.height - 10));
+}
 
 /**
  * Seat positions are derived from the shape and seat count, never stored.
@@ -38,6 +48,8 @@ export function seatPositions(table: SeatLayoutInput): SeatPos[] {
       return rectSeats(n, table.width, table.height);
     case "banquet":
       return banquetSeats(n, table.width, table.height, table.sides ?? 2);
+    case "u":
+      return uSeats(n, table.width, table.height, barWidthOf(table), table.sides ?? 2);
   }
 }
 
@@ -76,6 +88,49 @@ function rectSeats(n: number, w: number, h: number): SeatPos[] {
   for (let k = 0; k < right; k++) seats.push({ x: hw + SEAT_OFFSET, y: -hh + (h * (k + 0.5)) / right, nx: 1, ny: 0 });
   for (let k = 0; k < bottom; k++) seats.push({ x: hw - (w * (k + 0.5)) / bottom, y: hh + SEAT_OFFSET, nx: 0, ny: 1 });
   for (let k = 0; k < left; k++) seats.push({ x: -hw - SEAT_OFFSET, y: hh - (h * (k + 0.5)) / left, nx: -1, ny: 0 });
+  return seats;
+}
+
+/** Outline of a Π-shaped table: top bar plus two arms reaching down, centered on (0, 0). */
+export function uOutline(w: number, h: number, d: number): number[] {
+  const hw = w / 2;
+  const hh = h / 2;
+  return [-hw, -hh, hw, -hh, hw, hh, hw - d, hh, hw - d, -hh + d, -hw + d, -hh + d, -hw + d, hh, -hw, hh];
+}
+
+/**
+ * Π-shaped table: seats along the outside (top, right, left), and with `sides` 2 also
+ * along the inside of the arms and the head bar. Numbered clockwise from the top-left.
+ * Inner seats keep clear of the inside corners so they do not collide.
+ */
+function uSeats(n: number, w: number, h: number, d: number, sides: 1 | 2): SeatPos[] {
+  const hw = w / 2;
+  const hh = h / 2;
+  const o = SEAT_OFFSET;
+  const c = SEAT_OFFSET + SEAT_RADIUS;
+  type Segment = { x0: number; y0: number; x1: number; y1: number; nx: number; ny: number; length: number };
+  const segments: Segment[] = [
+    { x0: -hw, y0: -hh - o, x1: hw, y1: -hh - o, nx: 0, ny: -1, length: w },
+    { x0: hw + o, y0: -hh, x1: hw + o, y1: hh, nx: 1, ny: 0, length: h },
+  ];
+  if (sides === 2) {
+    // Seats inside the arms need room on both sides of the gap; otherwise only the head bar's inside is used.
+    const gap = w - 2 * d;
+    const arm = gap >= 2 * c + 2 * SEAT_RADIUS ? Math.max(0, h - d - c) : 0;
+    const head = Math.max(0, gap - 2 * c);
+    segments.push({ x0: hw - d - o, y0: hh, x1: hw - d - o, y1: -hh + d + c, nx: -1, ny: 0, length: arm });
+    segments.push({ x0: hw - d - c, y0: -hh + d + o, x1: -hw + d + c, y1: -hh + d + o, nx: 0, ny: 1, length: head });
+    segments.push({ x0: -hw + d + o, y0: -hh + d + c, x1: -hw + d + o, y1: hh, nx: 1, ny: 0, length: arm });
+  }
+  segments.push({ x0: -hw - o, y0: hh, x1: -hw - o, y1: -hh, nx: -1, ny: 0, length: h });
+  const counts = allocate(n, segments.map((s) => s.length));
+  const seats: SeatPos[] = [];
+  segments.forEach((s, i) => {
+    for (let k = 0; k < counts[i]; k++) {
+      const t = (k + 0.5) / counts[i];
+      seats.push({ x: s.x0 + (s.x1 - s.x0) * t, y: s.y0 + (s.y1 - s.y0) * t, nx: s.nx, ny: s.ny });
+    }
+  });
   return seats;
 }
 
@@ -135,6 +190,12 @@ export function seatAt(tables: Iterable<Table>, p: Point, tolerance = SEAT_RADIU
 export function pointInTable(table: Table, p: Point, margin = 0): boolean {
   const local = toLocal(table, p);
   if (table.shape === "round") return Math.hypot(local.x, local.y) <= table.width / 2 + margin;
+  if (table.shape === "u") {
+    const d = barWidthOf(table);
+    const inBox = Math.abs(local.x) <= table.width / 2 + margin && Math.abs(local.y) <= table.height / 2 + margin;
+    const inGap = Math.abs(local.x) < table.width / 2 - d - margin && local.y > -table.height / 2 + d + margin;
+    return inBox && !inGap;
+  }
   return Math.abs(local.x) <= table.width / 2 + margin && Math.abs(local.y) <= table.height / 2 + margin;
 }
 

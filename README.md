@@ -9,7 +9,7 @@ The app runs entirely in the browser and can be hosted as static files, for exam
 **Room and tables**
 - Pan and zoom with the mouse wheel, trackpad or pinch.
 - Room outline, grid and snap to grid, each of which can be turned off.
-- Round, rectangular and long (banquet) tables. Banquet tables can have seats on one side or both.
+- Round, rectangular, long (banquet) and Π-shaped tables. Banquet tables can have seats on one side or both. Π-shaped tables (a head table with two arms) can have seats outside only, or inside the arms and the head table as well.
 - Seats are laid out automatically from the table shape and seat count.
 - Move, rotate, resize, rename, duplicate and delete tables. New tables are placed where they don't overlap others.
 - Labeled objects that have no seats: dance floor, buffet, stage, entrance, bar, DJ.
@@ -248,14 +248,15 @@ interface Room {
 interface Table {
   id: ID;
   label: string;                      // "Table 4"
-  shape: "round" | "rect" | "banquet";
+  shape: "round" | "rect" | "banquet" | "u";   // "u" is Π-shaped
   x: number;
   y: number;
   rotation: number;                   // degrees
   width: number;                      // diameter for round
   height: number;
   seatCount: number;
-  sides?: 1 | 2;                      // banquet only: seats on one or both long sides
+  sides?: 1 | 2;                      // banquet: one or both long sides; Π: outside only, or outside and inside
+  barWidth?: number;                  // Π only: depth of the head bar and the arms
 }
 
 interface SeatRef {

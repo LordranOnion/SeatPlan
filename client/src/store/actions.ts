@@ -1,5 +1,6 @@
 import type * as Y from "yjs";
 import {
+  DEFAULT_BAR_WIDTH,
   MAX_SEATS,
   TABLE_DEFAULTS,
   findFreeSpot,
@@ -104,7 +105,8 @@ export function addTable(doc: Y.Doc, shape: TableShape, at: Point, labelWord: st
       width: d.width,
       height: d.height,
       seatCount: d.seatCount,
-      ...(shape === "banquet" ? { sides: 2 as const } : {}),
+      ...(shape === "banquet" || shape === "u" ? { sides: 2 as const } : {}),
+      ...(shape === "u" ? { barWidth: DEFAULT_BAR_WIDTH } : {}),
     };
     setEntity(planMaps(doc).tables, id, table);
     return id;
@@ -123,7 +125,9 @@ export function updateTable(doc: Y.Doc, id: ID, patch: Partial<Omit<Table, "id">
         if (seat.tableId === id && seat.index >= next.seatCount!) m.assignments.delete(guestId);
       });
     }
-    if (next.shape === "banquet" && !m.tables.get(id)!.has("sides")) (next as Partial<Table>).sides = 2;
+    const current = m.tables.get(id)!;
+    if ((next.shape === "banquet" || next.shape === "u") && !current.has("sides")) next.sides = 2;
+    if (next.shape === "u" && !current.has("barWidth")) next.barWidth = DEFAULT_BAR_WIDTH;
     patchEntity(m.tables, id, next);
   });
 }

@@ -9,7 +9,7 @@ type Raw = Record<string, unknown>;
 const isObj = (v: unknown): v is Raw => typeof v === "object" && v !== null && !Array.isArray(v);
 const str = (v: unknown, fallback = ""): string => (typeof v === "string" ? v : fallback);
 const num = (v: unknown, fallback: number): number => (typeof v === "number" && Number.isFinite(v) ? v : fallback);
-const SHAPES: TableShape[] = ["round", "rect", "banquet"];
+const SHAPES: TableShape[] = ["round", "rect", "banquet", "u"];
 
 /** Accepts either a record keyed by ID (v1) or an array of objects with `id` (v0 drafts). */
 function toRecord(v: unknown): Record<ID, Raw> {
@@ -57,7 +57,8 @@ export function migratePlan(input: unknown): Plan {
       width,
       height: Math.max(20, num(t.height, shape === "round" ? width : 80)),
       seatCount: Math.max(0, Math.min(60, Math.round(num(t.seatCount, 8)))),
-      ...(shape === "banquet" ? { sides: t.sides === 1 ? (1 as const) : (2 as const) } : {}),
+      ...(shape === "banquet" || shape === "u" ? { sides: t.sides === 1 ? (1 as const) : (2 as const) } : {}),
+      ...(shape === "u" ? { barWidth: Math.max(20, num(t.barWidth, 70)) } : {}),
     };
   }
 

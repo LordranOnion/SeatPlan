@@ -60,6 +60,33 @@ describe("seatPositions", () => {
     expect(one.every((s) => s.y < 0)).toBe(true);
   });
 
+  it("seats a Π-shaped table outside only, or also inside, without touching the table or each other", () => {
+    const base = { shape: "u" as const, width: 420, height: 320, barWidth: 70, seatCount: 24 };
+    const onTable = (s: { x: number; y: number }) => pointInTable(table({ ...base, x: 0, y: 0 }), s, SEAT_RADIUS - 1);
+    for (const sides of [1, 2] as const) {
+      const seats = seatPositions(table({ ...base, sides }));
+      expect(seats).toHaveLength(24);
+      for (const s of seats) expect(onTable(s)).toBe(false);
+      for (let i = 0; i < seats.length; i++) {
+        for (let j = i + 1; j < seats.length; j++) {
+          expect(Math.hypot(seats[i].x - seats[j].x, seats[i].y - seats[j].y)).toBeGreaterThan(SEAT_RADIUS * 2);
+        }
+      }
+    }
+    // Outside only: every seat is outside the table's bounding box.
+    const outside = seatPositions(table({ ...base, sides: 1 }));
+    expect(outside.every((s) => Math.abs(s.x) > 210 || s.y < -160)).toBe(true);
+    // Outside and inside: some seats sit in the gap between the arms.
+    const both = seatPositions(table({ ...base, sides: 2 }));
+    expect(both.some((s) => Math.abs(s.x) < 210 - 70 && s.y > -160 + 70)).toBe(true);
+  });
+
+  it("keeps a narrow Π's inside free of seats along the arms", () => {
+    const seats = seatPositions(table({ shape: "u", width: 200, height: 300, barWidth: 70, seatCount: 20, sides: 2 }));
+    expect(seats).toHaveLength(20);
+    expect(seats.some((s) => s.nx !== 0 && Math.abs(s.x) < 100)).toBe(false);
+  });
+
   it("re-flows seats when the seat count changes (positions are derived, not stored)", () => {
     const six = seatPositions(table({ seatCount: 6 }));
     const eight = seatPositions(table({ seatCount: 8 }));
@@ -91,5 +118,12 @@ describe("coordinates and hit testing", () => {
     expect(pointInTable(a, { x: 100, y: 170 })).toBe(false);
     expect(tableAt([a, b], { x: 120, y: 100 })?.id).toBe("b");
     expect(tableAt([a, b], { x: 900, y: 900 })).toBeNull();
+  });
+
+  it("treats the open gap of a Π-shaped table as empty floor", () => {
+    const u = table({ shape: "u", width: 420, height: 320, barWidth: 70 });
+    expect(pointInTable(u, { x: 0, y: -140 })).toBe(true); // head bar
+    expect(pointInTable(u, { x: -180, y: 100 })).toBe(true); // left arm
+    expect(pointInTable(u, { x: 0, y: 60 })).toBe(false); // the gap
   });
 });

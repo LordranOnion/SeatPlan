@@ -10,6 +10,7 @@ describe("migratePlan", () => {
     const doc = new Y.Doc();
     initPlan(doc, "Βάπτιση");
     const t = addTable(doc, "banquet", { x: 100, y: 80 }, "Table");
+    addTable(doc, "u", { x: 600, y: 400 }, "Table");
     const fam = addGroup(doc, "Οικογένεια Παπαδόπουλου");
     const g = addGuest(doc, { name: "Μαρία", groupId: fam, isChild: true, note: "καρεκλάκι" })!;
     assignGuest(doc, g, { tableId: t, index: 2 });

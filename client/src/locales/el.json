@@ -17,7 +17,8 @@
   "shapes": {
     "round": "Στρογγυλό",
     "rect": "Ορθογώνιο",
-    "banquet": "Μακρύ / μπανκέτου"
+    "banquet": "Μακρύ / μπανκέτου",
+    "u": "Σχήμα Π"
   },
   "fixtures": {
     "danceFloor": "Πίστα",
@@ -68,7 +69,11 @@
     "rotation": "Περιστροφή °",
     "stats": "{{seated}} από {{total}} θέσεις πιασμένες, {{free}} ελεύθερες",
     "ages": "Ενήλικες {{adults}} · Παιδιά {{children}}",
-    "emptySeat": "κενή"
+    "emptySeat": "κενή",
+    "outsideOnly": "Μόνο εξωτερικά",
+    "outsideAndInside": "Εξωτερικά και εσωτερικά",
+    "armLength": "Βάθος (πλευρές)",
+    "barWidth": "Φάρδος τραπεζιού"
   },
   "sidebar": {
     "title": "Λίστα καλεσμένων",
